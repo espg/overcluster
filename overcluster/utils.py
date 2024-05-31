@@ -10,7 +10,7 @@ def slow_bisecting_kmeans(coords):
     the initial number of target clusters, and then iterates upwards from
     there until the termination condition is met. Will be replaced."""
 
-    nclust = len(coords//50) + 1
+    nclust = (len(coords)//50) + 1
     kmean = BisectingKMeans(n_clusters=nclust, init='k-means++',n_init = 50,algorithm='elkan', max_iter=8000, bisecting_strategy='largest_cluster')
     kmean.fit(coords)
 

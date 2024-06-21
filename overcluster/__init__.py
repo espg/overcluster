@@ -2,7 +2,7 @@
 overcluster: a library for generating overlapping cluster membership
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from .utils import *
 from .bisect_q_means import BisectingQMeans

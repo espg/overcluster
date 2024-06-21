@@ -11,8 +11,8 @@ To do:
 - [ ] Example notebook(s)
 - [ ] Narrative documentation
 - [ ] Unit tests
-- [ ] Clean up namespace conventions
-- [ ] Flake8 compliance 
+- [x] Clean up namespace conventions
+- [x] Flake8 compliance 
 - [ ] Integrate releases into github (setup github actions)
 
 Major task(s):

@@ -22,13 +22,13 @@ from sklearn.cluster._kmeans import (_labels_inertia_threadpool_limit,
 
 
 class _BisectingTree:
-    """Tree structure representing the hierarchical clusters of BisectingKMeans."""
+    """Tree structure representing the hierarchical clusters from bisecting"""
 
     def __init__(self, center, indices, score):
         """Create a new cluster node in the tree.
 
-        The node holds the center of this cluster and the indices of the data points
-        that belong to it.
+        The node holds the center of this cluster and the indices of the data
+        points that belong to it.
         """
         self.center = center
         self.indices = indices
@@ -39,12 +39,10 @@ class _BisectingTree:
 
     def split(self, labels, centers, scores):
         """Split the cluster node into two subclusters."""
-        self.left = _BisectingTree(
-            indices=self.indices[labels == 0], center=centers[0], score=scores[0]
-        )
-        self.right = _BisectingTree(
-            indices=self.indices[labels == 1], center=centers[1], score=scores[1]
-        )
+        self.left = _BisectingTree(indices=self.indices[labels == 0],
+                                   center=centers[0], score=scores[0])
+        self.right = _BisectingTree(indices=self.indices[labels == 1],
+                                    center=centers[1], score=scores[1])
 
         # reset the indices attribute to save memory
         self.indices = None
@@ -52,8 +50,8 @@ class _BisectingTree:
     def get_cluster_to_bisect(self):
         """Return the cluster node to bisect next.
 
-        It's based on the score of the cluster, which can be either the number of
-        data points assigned to that cluster or the inertia of that cluster
+        It's based on the score of the cluster, which can be either the number
+        of data points assigned to that cluster or the inertia of that cluster
         (see `bisecting_strategy` for details).
         """
         max_score = None
@@ -62,12 +60,11 @@ class _BisectingTree:
             if max_score is None or cluster_leaf.score > max_score:
                 max_score = cluster_leaf.score
                 best_cluster_leaf = cluster_leaf
-        
+
         if np.isneginf(max_score):
             self.bisect = False
         else:
             return best_cluster_leaf
-
 
     def iter_leaves(self):
         """Iterate over all the cluster leaves in the tree."""
@@ -84,7 +81,7 @@ class BisectingQMeans(_BaseKMeans):
     In contrast to Bisecting K-Means, Bisecting Q-Means clustering will infer
     the number of clustered based on a termination condition. For this
     implementation, bisecting termination occurs according to minimum and
-    optimum cluster sizes. 
+    optimum cluster sizes.
 
     Parameters
     ----------
@@ -154,9 +151,9 @@ class BisectingQMeans(_BaseKMeans):
 
          - "biggest_inertia" means that BisectingKMeans will always check
             all calculated cluster for cluster with biggest SSE
-            (Sum of squared errors) and bisect it. This approach concentrates on
-            precision, but may be costly in terms of execution time (especially for
-            larger amount of data points).
+            (Sum of squared errors) and bisect it. This approach concentrates
+            on precision, but may be costly in terms of execution time
+            (especially for larger amount of data points).
 
          - "largest_cluster" - BisectingKMeans will always split cluster with
             largest amount of points assigned to it from all clusters
@@ -217,8 +214,8 @@ class BisectingQMeans(_BaseKMeans):
         "n_init": [Interval(Integral, 1, None, closed="left")],
         "copy_x": ["boolean"],
         "algorithm": [StrOptions({"lloyd", "elkan"})],
-        "bisecting_strategy": [StrOptions({"biggest_inertia", "largest_cluster"})],
-    }
+        "bisecting_strategy": [StrOptions({"biggest_inertia",
+                                           "largest_cluster"})], }
 
     def __init__(
         self,
@@ -280,14 +277,15 @@ class BisectingQMeans(_BaseKMeans):
         inertia_per_cluster : ndarray of shape (n_clusters=2,)
             Sum of squared errors (inertia) for each cluster.
         """
-        n_clusters = centers.shape[0]  # = 2 since centers comes from a bisection
+        # n_clusters = 2 since centers comes from a bisection
+        n_clusters = centers.shape[0]
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
         inertia_per_cluster = np.empty(n_clusters)
         for label in range(n_clusters):
-            inertia_per_cluster[label] = _inertia(
-                X, sample_weight, centers, labels, self._n_threads, single_label=label
-            )
+            inertia_per_cluster[label] = _inertia(X, sample_weight, centers,
+                                                  labels, self._n_threads,
+                                                  single_label=label)
 
         return inertia_per_cluster
 
@@ -351,11 +349,11 @@ class BisectingQMeans(_BaseKMeans):
                 X, best_centers, best_labels, sample_weight
             )
             counts = np.bincount(best_labels, minlength=2)
-            #scores = np.bincount(best_labels, minlength=2)
+            # scores = np.bincount(best_labels, minlength=2)
             scores[np.where(counts < 16)] = -np.inf
         else:  # bisecting_strategy == "largest_cluster"
-            # Using minlength to make sure that we have the counts for both labels even
-            # if all samples are labelled 0.
+            # Using minlength to make sure that we have the counts for both
+            # labels even if all samples are labelled 0.
             scores = np.bincount(best_labels, minlength=2)
         # case where bisecting is not optimum
         if (counts[0] + counts[1]) < 20:
@@ -429,13 +427,14 @@ class BisectingQMeans(_BaseKMeans):
 
         x_squared_norms = row_norms(X, squared=True)
 
-        while self.bisect == True:
+        while self.bisect:
             # Chose cluster to bisect
             cluster_to_bisect = self._bisecting_tree.get_cluster_to_bisect()
 
             # Split this cluster into 2 subclusters
             if cluster_to_bisect is not None:
-                self._bisect(X, x_squared_norms, sample_weight, cluster_to_bisect)
+                self._bisect(X, x_squared_norms, sample_weight,
+                             cluster_to_bisect)
             else:
                 break
 
@@ -446,11 +445,13 @@ class BisectingQMeans(_BaseKMeans):
         for i, cluster_node in enumerate(self._bisecting_tree.iter_leaves()):
             self.labels_[cluster_node.indices] = i
             self.cluster_centers_.append(cluster_node.center)
-            cluster_node.label = i  # label final clusters for future prediction
+            # label final clusters for future prediction
+            cluster_node.label = i
             cluster_node.indices = None  # release memory
 
         self.n_clusters = len(self.cluster_centers_)
-        cluster_centers_ = np.empty((self.n_clusters, X.shape[1]), dtype=X.dtype)
+        cluster_centers_ = np.empty((self.n_clusters, X.shape[1]),
+                                    dtype=X.dtype)
         for i, center in enumerate(self.cluster_centers_):
             cluster_centers_[i] = center[:]
         self.cluster_centers_ = cluster_centers_
@@ -461,9 +462,8 @@ class BisectingQMeans(_BaseKMeans):
             self.cluster_centers_ += self._X_mean
 
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
-        self.inertia_ = _inertia(
-            X, sample_weight, self.cluster_centers_, self.labels_, self._n_threads
-        )
+        self.inertia_ = _inertia(X, sample_weight, self.cluster_centers_,
+                                 self.labels_, self._n_threads)
 
         self._n_features_out = self.cluster_centers_.shape[0]
 
@@ -497,7 +497,8 @@ class BisectingQMeans(_BaseKMeans):
         # sample weights are unused but necessary in cython helpers
         sample_weight = np.ones_like(x_squared_norms)
 
-        labels = self._predict_recursive(X, sample_weight, self._bisecting_tree)
+        labels = self._predict_recursive(X, sample_weight,
+                                         self._bisecting_tree)
 
         return labels
 
@@ -507,8 +508,8 @@ class BisectingQMeans(_BaseKMeans):
         Parameters
         ----------
         X : {ndarray, csr_matrix} of shape (n_samples, n_features)
-            The data points, currently assigned to `cluster_node`, to predict between
-            the subclusters of this node.
+            The data points, currently assigned to `cluster_node`, to predict
+            between the subclusters of this node.
 
         sample_weight : ndarray of shape (n_samples,)
             The weights for each observation in X.
@@ -522,11 +523,13 @@ class BisectingQMeans(_BaseKMeans):
             Index of the cluster each sample belongs to.
         """
         if cluster_node.left is None:
-            # This cluster has no subcluster. Labels are just the label of the cluster.
+            # This cluster has no subcluster.
+            # Labels are just the label of the cluster.
             return np.full(X.shape[0], cluster_node.label, dtype=np.int32)
 
         # Determine if data points belong to the left or right subcluster
-        centers = np.vstack((cluster_node.left.center, cluster_node.right.center))
+        centers = np.vstack((cluster_node.left.center,
+                             cluster_node.right.center))
         if hasattr(self, "_X_mean"):
             centers += self._X_mean
 
@@ -554,4 +557,3 @@ class BisectingQMeans(_BaseKMeans):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
-
